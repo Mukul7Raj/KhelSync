@@ -149,7 +149,10 @@ export default function TournamentFormModal({
                     <FormItem>
                       <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Textarea {...field} />
+                        <Textarea
+                          {...field}
+                          value={field.value ?? ''}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -165,6 +168,7 @@ export default function TournamentFormModal({
                         <Input
                           type="number"
                           {...field}
+                          value={field.value ?? ''}
                           onChange={(e) =>
                             field.onChange(
                               e.target.value

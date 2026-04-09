@@ -24,8 +24,6 @@ import { getUsername, markAllNotificationsAsRead } from '@/lib/actions';
 import { createClient } from '@/utils/supabase/client';
 import { AnimatePresence, motion } from 'framer-motion';
 
-let isSubscribed = false; // Global flag to prevent duplicate subscriptions
-
 export function Notifications({
   initNotifications,
 }: {
@@ -37,11 +35,10 @@ export function Notifications({
   const [showNewNotification, setShowNewNotification] = useState(false);
   const [newNotification, setNewNotification] = useState<Notification>();
 
+  const channelRef = useRef<any>(null);
+
   useEffect(() => {
-    // CRITICAL: Check if already subscribed to prevent duplicate subscriptions
-    if (isSubscribed) {
-      return;
-    }
+    if (channelRef.current) return;
 
     const handleNewNotification = async (
       newNotificationFromServer: Notification
@@ -73,9 +70,9 @@ export function Notifications({
       }, 4000);
     };
 
-    // Create channel ONCE with proper listener setup
+    const channelId = Math.random().toString(36).substring(7);
     const channel = supabase
-      .channel('notifications') // Use simple name, not 'realtime:notifications'
+      .channel(`notifications-realtime-${channelId}`)
       .on(
         'postgres_changes',
         {
@@ -83,7 +80,7 @@ export function Notifications({
           schema: 'public',
           table: 'notifications',
         },
-        (payload: any) => {
+        (payload) => {
           console.log('Realtime payload:', payload);
           if (payload.eventType === 'INSERT') {
             handleNewNotification(payload.new as Notification);
@@ -92,12 +89,11 @@ export function Notifications({
       )
       .subscribe();
 
-    isSubscribed = true;
+    channelRef.current = channel;
 
     return () => {
-      // Cleanup
       supabase.removeChannel(channel);
-      isSubscribed = false;
+      channelRef.current = null;
     };
   }, [supabase]);
 
@@ -120,7 +116,7 @@ export function Notifications({
             >
               <div className="flex items-start">
                 <div className="flex-1 mr-2">
-                  {newNotification.type === 'new_message' && (
+                  {newNotification.type === 'new_message' && ( //different message for different notification types
                     <p className="text-sm">
                       {'New message from ' + newNotification.username}
                     </p>
