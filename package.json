@@ -1,4 +1,7 @@
 {
+  "name": "khelsync",
+  "version": "1.0.0",
+  "description": "The Ultimate Real-Time College Tournament Ecosystem",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -17,7 +17,7 @@ export default async function Page() {
       <section className="w-full bg-gradient-to-b from-background to-muted py-20 text-center">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            Tournament Platform Home
+            KhelSync Home
           </h1>
           <p className="text-xl mb-8 text-muted-foreground"></p>
           <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4"></div>

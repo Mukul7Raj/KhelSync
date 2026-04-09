@@ -19,8 +19,8 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata = {
   metadataBase: new URL(defaultUrl),
-  title: 'Tournament Platform',
-  description: 'A platform for creating and managing tournaments',
+  title: 'KhelSync',
+  description: 'The Ultimate Real-Time College Tournament Ecosystem',
 };
 
 export default async function RootLayout({
@@ -51,7 +51,7 @@ export default async function RootLayout({
                         >
                           <Trophy className="h-6 w-6" />
                           <span className="hidden md:inline">
-                            Tournament Platform
+                            KhelSync
                           </span>
                         </Link>
                         <div className="md:hidden">
