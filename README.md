@@ -39,19 +39,19 @@ In the fast-paced environment of college fests, managing fixtures, scores, and u
 ## 📸 Visual Showcase
 
 ### 🖥️ Management Dashboard
-![Dashboard](public/screenshots/dashboard.png)
+![Dashboard](./public/screenshots/dashboard.png)
 *The central hub for tournament oversight, live streams, and real-time standings.*
 
 ### 🔨 Auction Arena
-![Auction Arena](public/screenshots/auction.png)
+![Auction Arena](./public/screenshots/auction.png)
 *Live player bidding with real-time state synchronization and dynamic price scaling.*
 
 ### 🏟️ Team Management Hub
-![Team Management](public/screenshots/team_management.png)
+![Team Management](./public/screenshots/team_management.png)
 *Tactical formation control, team chemistry analytics, and radar-based attribute tracking.*
 
 ### 📺 Fan Hub & Broadcast
-![Broadcast](public/screenshots/broadcast.png)
+![Broadcast](./public/screenshots/broadcast.png)
 *Interactive live streams with fan chat, prediction polls, and community goals.*
 
 ---
