@@ -68,7 +68,7 @@ export function JoinButton({ user, tournamentId }: JoinButtonProps) {
       <div className="text-center">
         <Button
           onClick={handleLoginRedirect}
-          className="w-full sm:w-auto cyber-btn animate-pulse-glow"
+          className="w-full sm:w-auto cyber-btn"
         >
           Log in to Join Tournament 🔐
         </Button>
@@ -85,7 +85,7 @@ export function JoinButton({ user, tournamentId }: JoinButtonProps) {
       <Button
         onClick={handleJoin}
         disabled={isJoining}
-        className="w-full sm:w-auto cyber-btn animate-pulse-glow transition-transform hover:scale-105"
+        className="w-full sm:w-auto cyber-btn transition-transform hover:scale-105"
       >
         {isJoining ? 'Joining Journey... ⚡' : 'Join Tournament 🤝'}
       </Button>

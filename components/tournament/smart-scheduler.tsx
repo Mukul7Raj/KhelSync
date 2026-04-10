@@ -5,6 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SingleEliminationMatch } from '@/app/types/types';
+import { updateMatchSchedule } from '@/lib/actions';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, Calendar, MapPin, Zap, RefreshCw, Save, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type SchedulableMatch = SingleEliminationMatch & {
   id: string;
@@ -17,6 +21,7 @@ type ScheduleRow = {
   title: string;
   slotLabel: string;
   ground: string;
+  rawMinutes: number;
 };
 
 const DEMO_MATCHES: SchedulableMatch[] = [
@@ -75,9 +80,23 @@ function toLabel(totalMinutes: number): string {
 
 export default function SmartScheduler({
   matches,
+  isCreator,
 }: {
   matches: SingleEliminationMatch[] | null;
+  isCreator: boolean | null;
 }) {
+  const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Detect if there's already a saved schedule
+  const hasExistingSchedule = useMemo(() => 
+    (matches ?? []).some(m => m.scheduled_time),
+    [matches]
+  );
+
+  const [generated, setGenerated] = useState(hasExistingSchedule);
+
   const schedulableMatches = useMemo(
     () =>
       (matches ?? [])
@@ -88,13 +107,13 @@ export default function SmartScheduler({
         .sort((a, b) => a.round - b.round),
     [matches]
   );
-  const schedulePool =
-    schedulableMatches.length > 0 ? schedulableMatches : DEMO_MATCHES;
+  
+  const isDemo = schedulableMatches.length === 0;
+  const schedulePool = isDemo ? DEMO_MATCHES : schedulableMatches;
 
-  const [generated, setGenerated] = useState(false);
   const [durationMins, setDurationMins] = useState(60);
-  const [slotInput, setSlotInput] = useState('10:00 AM, 11:00 AM, 12:00 PM, 1:00 PM');
-  const [groundsInput, setGroundsInput] = useState('Ground 1');
+  const [slotInput, setSlotInput] = useState('10:00 AM, 11:00 AM, 12:00 PM, 01:00 PM');
+  const [groundsInput, setGroundsInput] = useState('Ground 1, Ground 2');
   const [matchOrder, setMatchOrder] = useState<string[]>(
     schedulePool.map((m) => m.id)
   );
@@ -156,6 +175,7 @@ export default function SmartScheduler({
             title: `${match.homePlayerUsername || 'Team A'} vs ${match.awayPlayerUsername || 'Team B'}`,
             slotLabel: toLabel(slot),
             ground: grounds[i % grounds.length],
+            rawMinutes: slot
           });
           cursor = slotIndex + 1;
           break;
@@ -170,11 +190,16 @@ export default function SmartScheduler({
 
   const handleGenerate = () => {
     setGenerated(true);
+    setSaveSuccess(false);
     setMatchOrder(schedulePool.map((m) => m.id));
+    toast({
+      title: "Schedule Optimized",
+      description: "Match times have been aligned to avoid player overlaps.",
+    });
   };
 
   const handleReschedule = (matchId: string) => {
-    setGenerated(true);
+    setSaveSuccess(false);
     setMatchOrder((prev) => {
       const index = prev.indexOf(matchId);
       if (index === -1 || index === prev.length - 1) return prev;
@@ -185,87 +210,213 @@ export default function SmartScheduler({
     });
   };
 
+  const handleSaveSchedule = async () => {
+    if (isDemo) {
+      toast({
+        title: "Demo Mode",
+        description: "Cannot save schedule in demo mode.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const today = new Date();
+      for (const row of schedule.rows) {
+        const scheduledTime = new Date(today);
+        scheduledTime.setHours(Math.floor(row.rawMinutes / 60), row.rawMinutes % 60, 0, 0);
+        
+        await updateMatchSchedule(row.matchId, scheduledTime.toISOString(), row.ground);
+      }
+      
+      setSaveSuccess(true);
+      toast({
+        title: "Schedule Published",
+        description: "All matches have been updated with their new times and grounds.",
+      });
+    } catch (error) {
+      toast({
+        title: "Save Failed",
+        description: "An error occurred while persisting the schedule.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
-    <Card className="hover-lift-glow">
-      <CardHeader>
-        <CardTitle>Smart Match Scheduler</CardTitle>
+    <Card className="hover-lift-glow border-cyan-500/30 bg-black/60 backdrop-blur-xl overflow-hidden relative">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50" />
+      
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-cyan-400 font-mono tracking-tighter">
+          <Zap className="w-5 h-5 fill-cyan-500 animate-pulse" />
+          SMART_SCHEDULER.exe
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Fixes organizer pain: generates conflict-free schedules from players,
-          time slots, and optional grounds.
+      
+      <CardContent className="space-y-6">
+        <p className="text-xs text-cyan-100/60 font-mono leading-relaxed">
+          // Automates fixture timing to prevent player fatigue and venue conflicts.
+          // Optimized for real-time synchronization.
         </p>
-        {schedulableMatches.length === 0 && (
-          <div className="rounded-md border border-blue-500/40 bg-blue-500/10 p-3 text-sm">
-            Demo data loaded for hackathon preview (3 sample matches).
+
+        {isDemo && isCreator && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded border border-yellow-500/40 bg-yellow-500/5 p-3 text-[10px] font-mono text-yellow-200/80 flex items-start gap-2"
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 mt-1 animate-ping" />
+            <span>SANDBOX_MODE: Loading virtual matches for preview. Real-time persistence disabled.</span>
+          </motion.div>
+        )}
+
+        {isCreator && (
+          <div className="grid gap-4 bg-white/5 p-4 border border-white/10 rounded-lg">
+            <div className="space-y-1.5">
+              <label className="text-[10px] uppercase tracking-widest text-cyan-400 font-bold flex items-center gap-1.5">
+                <Calendar className="w-3 h-3" /> Time Windows
+              </label>
+              <Input
+                value={slotInput}
+                onChange={(e) => setSlotInput(e.target.value)}
+                className="bg-black/40 border-cyan-500/20 text-cyan-100 placeholder:text-cyan-900/50 h-9 text-sm"
+                placeholder="09:00 AM, 10:30 AM..."
+              />
+            </div>
+            
+            <div className="space-y-1.5">
+              <label className="text-[10px] uppercase tracking-widest text-cyan-400 font-bold flex items-center gap-1.5">
+                <MapPin className="w-3 h-3" /> Designated Grounds
+              </label>
+              <Input
+                value={groundsInput}
+                onChange={(e) => setGroundsInput(e.target.value)}
+                className="bg-black/40 border-cyan-500/20 text-cyan-100 placeholder:text-cyan-900/50 h-9 text-sm"
+                placeholder="Arena 1, Court B..."
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <div className="flex-1 space-y-1.5">
+                <label className="text-[10px] uppercase tracking-widest text-cyan-400 font-bold">Match Duration (min)</label>
+                <Input
+                  type="number"
+                  min={15}
+                  step={5}
+                  value={durationMins}
+                  onChange={(e) => setDurationMins(Number(e.target.value || 60))}
+                  className="bg-black/40 border-cyan-500/20 text-cyan-100 h-9 text-sm"
+                />
+              </div>
+            </div>
+
+            <Button 
+              onClick={handleGenerate} 
+              className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-mono uppercase tracking-widest text-xs h-10 group"
+            >
+              <Zap className="w-4 h-4 mr-2 group-hover:scale-125 transition-transform" />
+              Initialize Schedule
+            </Button>
           </div>
         )}
 
-        <div className="grid gap-3">
-          <div>
-            <p className="text-xs mb-1 text-muted-foreground">
-              Available time slots (comma-separated)
-            </p>
-            <Input
-              value={slotInput}
-              onChange={(e) => setSlotInput(e.target.value)}
-              placeholder="10:00 AM, 11:00 AM, 12:00 PM"
-            />
-          </div>
-          <div>
-            <p className="text-xs mb-1 text-muted-foreground">Grounds (optional)</p>
-            <Input
-              value={groundsInput}
-              onChange={(e) => setGroundsInput(e.target.value)}
-              placeholder="Ground 1, Ground 2"
-            />
-          </div>
-          <div>
-            <p className="text-xs mb-1 text-muted-foreground">Match duration (minutes)</p>
-            <Input
-              type="number"
-              min={15}
-              step={5}
-              value={durationMins}
-              onChange={(e) => setDurationMins(Number(e.target.value || 60))}
-            />
-          </div>
-          <Button onClick={handleGenerate} className="w-full">
-            ⚡ Generate Smart Schedule
-          </Button>
-        </div>
-
-        {generated && (
-          <div className="space-y-3">
-            {schedule.autoFixedConflicts > 0 && (
-              <div className="rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-sm">
-                ⚠ Player conflict detected and auto-fixed ({schedule.autoFixedConflicts}{' '}
-                shift{schedule.autoFixedConflicts > 1 ? 's' : ''})
+        <AnimatePresence mode="wait">
+          {generated && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="space-y-3"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-mono uppercase text-cyan-400/80">Computed Timeline</h3>
+                {schedule.autoFixedConflicts > 0 && (
+                  <span className="text-[10px] px-2 py-0.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded">
+                    {schedule.autoFixedConflicts} CONFLICTS_RESOLVED
+                  </span>
+                )}
               </div>
-            )}
 
-            {schedule.rows.map((row, idx) => (
-              <div key={row.matchId} className="rounded-md border p-3">
-                <p className="font-medium">
-                  Match {idx + 1}: {row.title}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  📅 {row.slotLabel} • {row.ground}
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleReschedule(row.matchId)}
-                  className="mt-2"
+              <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2 custom-scrollbar">
+                {schedule.rows.map((row, idx) => (
+                  <motion.div 
+                    layout
+                    key={row.matchId} 
+                    className="group relative rounded-md border border-white/5 bg-white/5 p-3 hover:bg-white/10 transition-colors"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-xs font-mono text-cyan-100 truncate w-[180px]">
+                          [{idx + 1}] {row.title}
+                        </p>
+                        <div className="flex gap-3 mt-1.5">
+                          <span className="text-[10px] text-cyan-400/60 flex items-center gap-1">
+                            <Calendar className="w-3 h-3" /> {row.slotLabel}
+                          </span>
+                          <span className="text-[10px] text-cyan-400/60 flex items-center gap-1">
+                            <MapPin className="w-3 h-3" /> {row.ground}
+                          </span>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleReschedule(row.matchId)}
+                        className="h-6 w-6 text-cyan-400/40 hover:text-cyan-400 hover:bg-cyan-500/10"
+                        title="Shift priority down"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {!isDemo && (
+                <Button 
+                  onClick={handleSaveSchedule}
+                  disabled={isSaving || saveSuccess}
+                  className={`w-full mt-4 font-mono uppercase tracking-widest text-xs h-10 transition-all ${
+                    saveSuccess 
+                    ? 'bg-green-600/20 text-green-400 border border-green-500/40' 
+                    : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                  }`}
                 >
-                  🔄 Reschedule Match
+                  {isSaving ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : saveSuccess ? (
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  {isSaving ? 'UPLOADING...' : saveSuccess ? 'PUBLISHED' : 'SYNC_TO_DATABASE'}
                 </Button>
-              </div>
-            ))}
-          </div>
-        )}
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </CardContent>
+      
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(0, 240, 255, 0.2);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 240, 255, 0.4);
+        }
+      `}</style>
     </Card>
   );
 }

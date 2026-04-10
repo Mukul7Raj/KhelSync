@@ -287,7 +287,7 @@ export default function TournamentFormModal({
                   )}
                 />
                 <div className="flex justify-end">
-                  <Button type="submit" className="cyber-btn animate-pulse-glow" disabled={isCreating}>
+                  <Button type="submit" className="cyber-btn" disabled={isCreating}>
                     {isCreating ? 'Creating Tournament... ⚡' : 'Create 🚀'}
                   </Button>
                 </div>

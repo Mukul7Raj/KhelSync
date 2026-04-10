@@ -29,7 +29,7 @@ export const WinnerCard: React.FC<WinnerCardProps> = async ({ tournament }) => {
       </div>
       <CardHeader className="p-0">
         <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-secondary h-24 flex items-center justify-center">
-          <Trophy className="text-white w-16 h-16 animate-bounce animate-pulse-glow" />
+          <Trophy className="text-white w-16 h-16 animate-bounce" />
         </div>
       </CardHeader>
       <CardContent className="p-6 bg-gradient-to-b from-yellow-100 to-white">

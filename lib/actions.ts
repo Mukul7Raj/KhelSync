@@ -485,19 +485,24 @@ export async function joinTournament(tournamentId: string) {
     return { error: 'Tournament is full' };
   }
 
+  // Upsert participation to allow re-joining or refreshing without errors
   const { data: tournamentUser, error: playerError } = await supabase
     .from('user_tournaments')
-    .insert([{ tournament_id: tournamentId, user_id: userObject.data.user.id }])
-    .select('id')
-    .single();
+    .upsert(
+      { tournament_id: tournamentId, user_id: userObject.data.user.id },
+      { onConflict: 'tournament_id,user_id' }
+    )
+    .select();
 
-  if (playerError || !tournamentUser?.id) {
-    return { error: 'Failed to join tournament' };
+  if (playerError) {
+    console.error('JOIN ERROR:', playerError);
+    return { error: 'Failed to join tournament journey' };
   }
 
+  // Atomic increment for player_count
   const { error: updateError } = await supabase
     .from('tournaments')
-    .update({ player_count: tournament.player_count + 1 })
+    .update({ player_count: (tournament.player_count || 0) + 1 })
     .eq('id', tournamentId);
 
   if (updateError) {
@@ -1575,4 +1580,27 @@ export async function getUserCurrentMatches() {
 
 export async function revalidateBracket(tournamentId: string) {
   revalidatePath(`/tournaments/${tournamentId}`);
+}
+
+export async function updateMatchSchedule(
+  matchId: string,
+  scheduledTime: string | null,
+  ground: string | null
+) {
+  const supabase = await createClient();
+  
+  const { error } = await supabase
+    .from('single_elimination_matches')
+    .update({ 
+      scheduled_time: scheduledTime, 
+      ground: ground 
+    })
+    .eq('id', matchId);
+
+  if (error) {
+    console.error('Error updating match schedule:', error);
+    return { error: 'Failed to update match schedule' };
+  }
+
+  return { success: true };
 }

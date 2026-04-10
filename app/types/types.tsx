@@ -27,6 +27,8 @@ export interface SingleEliminationMatch {
   awayPlayerAvatarUrl?: string;
   homePlayerAvatarUrl?: string;
   winner_id?: string;
+  scheduled_time?: string;
+  ground?: string;
 }
 
 export interface TournamentPlayer {

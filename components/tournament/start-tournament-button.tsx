@@ -70,7 +70,7 @@ export default function StartTournamentButton({
       <Button
         onClick={handleClick}
         disabled={isPending}
-        className="flex items-center space-x-2 w-full animate-pulse-glow transition-transform hover:scale-105"
+        className="flex items-center space-x-2 w-full bg-cyan-500 text-black hover:bg-cyan-400 transition-transform hover:scale-105 font-bold shadow-[0_0_20px_rgba(0,240,255,0.4)]"
       >
         <Trophy className={`w-4 h-4 ${isPending ? 'animate-bounce' : ''}`} />
         <span>

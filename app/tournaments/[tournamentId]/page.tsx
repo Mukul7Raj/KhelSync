@@ -88,6 +88,7 @@ const TournamentPage = async ({
         started={tournament.started}
         finished={tournament.finished}
         playerCount={tournamentPlayers?.length || 0}
+        isScheduled={matches && matches.some((m) => m.scheduled_time)}
       />
       <div className="grid grid-cols-1 lg:grid-cols-[3fr,1.5fr,1.5fr] gap-6">
         {/* Tournament Bracket */}
@@ -172,7 +173,7 @@ const TournamentPage = async ({
             initialMatches={matches ?? []}
             tournamentStarted={tournament.started}
           />
-          <SmartScheduler matches={matches ?? []} />
+          <SmartScheduler matches={matches ?? []} isCreator={isUserCreator} />
         </div>
       </div>
     </div>
