@@ -34,6 +34,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './ui/tooltip';
+import QuickAssistant from './tournament/quick-assistant';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const formSchema = z.object({
   name: z
@@ -51,6 +53,7 @@ const formSchema = z.object({
     .max(1000, 'Maximum 1000 players')
     .optional(),
   isPrivate: z.boolean().optional(),
+  format: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -65,6 +68,7 @@ export default function TournamentFormModal({
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [showAssistant, setShowAssistant] = useState(false);
   const router = useRouter();
 
   const form = useForm<FormValues>({
@@ -74,6 +78,7 @@ export default function TournamentFormModal({
       description: '',
       maxPlayers: undefined,
       isPrivate: false,
+      format: 'single_elimination',
     },
   });
 
@@ -147,6 +152,43 @@ export default function TournamentFormModal({
                 Fill in the details to create a new tournament. Lock in your arena.
               </DialogDescription>
             </DialogHeader>
+
+            <div className="mb-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`w-full font-mono text-[10px] uppercase tracking-[0.2em] border-y border-cyan-500/10 hover:bg-cyan-500/5 transition-all ${showAssistant ? 'text-cyan-400' : 'text-cyan-900'}`}
+                onClick={() => setShowAssistant(!showAssistant)}
+              >
+                {showAssistant ? '<< SWITCH_TO_MANUAL_ENTRY' : '✨ MAGIC_AI_SETUP_ENABLED >>'}
+              </Button>
+            </div>
+
+            <AnimatePresence>
+              {showAssistant && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <QuickAssistant
+                    onApply={(config) => {
+                      form.setValue('name', config.name);
+                      form.setValue('description', config.description);
+                      form.setValue('maxPlayers', config.maxPlayers);
+                      form.setValue('isPrivate', config.isPrivate);
+                      setShowAssistant(false);
+                      toast({
+                        title: 'Configuration Applied',
+                        description: 'Your setup has been synced with the form.',
+                      });
+                    }}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
@@ -221,6 +263,25 @@ export default function TournamentFormModal({
                           {...field}
                           value={field.value ?? ''}
                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="format"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tournament Format 🏆</FormLabel>
+                      <FormControl>
+                        <select
+                          {...field}
+                          className="w-full bg-black border border-cyan-500/30 rounded-md p-2 text-cyan-50 focus:border-cyan-400 outline-none"
+                        >
+                          <option value="single_elimination">Single Elimination</option>
+                          <option value="double_elimination">Double Elimination</option>
+                        </select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

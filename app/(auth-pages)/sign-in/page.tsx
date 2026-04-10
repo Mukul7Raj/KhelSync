@@ -13,7 +13,7 @@ export default async function Login(props: {
 }) {
   const searchParams = (await props.searchParams) as Message;
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[#050914] relative overflow-hidden">
+    <div className="flex items-center justify-center min-h-screen bg-background relative overflow-hidden transition-colors duration-500">
       {/* Animated background layers */}
       <AnimatedBackground />
 
@@ -29,9 +29,9 @@ export default async function Login(props: {
         />
 
         {/* Card */}
-        <div className="relative bg-[#0a1128]/90 backdrop-blur-xl border border-[#00f0ff]/20 rounded-2xl p-8 space-y-6 shadow-[0_0_40px_rgba(0,240,255,0.08),0_0_80px_rgba(139,92,246,0.05)]">
-          {/* Top accent line */}
-          <div className="absolute top-0 left-8 right-8 h-[1px] bg-gradient-to-r from-transparent via-[#00f0ff]/60 to-transparent" />
+        <div className="relative bg-card/70 dark:bg-[#0a1128]/90 backdrop-blur-xl border border-border/50 dark:border-[#00f0ff]/20 rounded-2xl p-8 space-y-6 shadow-xl dark:shadow-[0_0_40px_rgba(0,240,255,0.08),0_0_80px_rgba(139,92,246,0.05)]">
+          {/* Top accent line with pulsing glow */}
+          <div className="absolute top-0 left-8 right-8 h-[1px] bg-gradient-to-r from-transparent via-[#00f0ff] to-transparent shadow-[0_0_15px_#00f0ff] animate-pulse" />
 
           {/* Corner accents */}
           <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#00f0ff]/40 rounded-tl-2xl" />
@@ -40,27 +40,40 @@ export default async function Login(props: {
           <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#ff2e88]/30 rounded-br-2xl" />
 
           {/* Header */}
-          <div className="space-y-3 text-center">
-            {/* Brand */}
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <div className="w-2 h-2 bg-[#00f0ff] rounded-full shadow-[0_0_8px_#00f0ff] animate-pulse" />
-              <span className="text-[10px] text-[#00f0ff]/60 font-mono tracking-[0.3em] uppercase">
-                Secure Access Portal
+          <div className="space-y-4 text-center relative overflow-hidden pb-2">
+            {/* Subtle scanline for header only */}
+            <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(0deg,transparent_0%,rgba(0,240,255,1)_50%,transparent_100%)] bg-[length:100%_4px] animate-[scanline_4s_linear_infinite]" />
+            
+            {/* Brand/System Tag */}
+            <div className="flex items-center justify-center gap-3">
+              <div className="h-[1px] w-8 bg-gradient-to-r from-transparent to-[#00f0ff]/40" />
+              <span className="text-[9px] text-[#00f0ff] font-mono tracking-[0.4em] uppercase opacity-70">
+                Authorized Personnel Only
               </span>
-              <div className="w-2 h-2 bg-[#00f0ff] rounded-full shadow-[0_0_8px_#00f0ff] animate-pulse" />
+              <div className="h-[1px] w-8 bg-gradient-to-l from-transparent to-[#00f0ff]/40" />
             </div>
-            <h1 className="text-3xl font-black tracking-wide">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00f0ff] via-white to-[#00f0ff]">
-                KhelSync
-              </span>
-            </h1>
-            <p className="text-sm text-white/40">
-              {"Don't have an account? "}
+
+            <div className="space-y-1">
+              <h1 className="text-4xl font-black tracking-tighter">
+                <span className="glitch-text cyber-gradient-text" data-text="KhelSync">
+                  KhelSync
+                </span>
+              </h1>
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-[8px] font-mono text-muted-foreground/40 tracking-widest uppercase">
+                  Encrypted_Link: ESTABLISHED
+                </span>
+                <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_5px_#10b981]" />
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground/60 pt-2">
+              {"New operative? "}
               <Link
-                className="font-semibold text-[#00f0ff] hover:text-[#00f0ff]/80 transition-colors hover:underline underline-offset-4"
+                className="font-bold text-primary hover:text-primary/80 transition-all hover:tracking-wider"
                 href="/sign-up"
               >
-                Sign up
+                Request Access
               </Link>
             </p>
           </div>
@@ -69,7 +82,7 @@ export default async function Login(props: {
           <form className="flex flex-col space-y-5">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs text-[#00f0ff]/80 uppercase tracking-widest font-semibold">
+                <Label htmlFor="email" className="text-xs text-muted-foreground dark:text-[#00f0ff]/80 uppercase tracking-widest font-semibold">
                   Email
                 </Label>
                 <Input
@@ -78,12 +91,12 @@ export default async function Login(props: {
                   type="email"
                   placeholder="you@example.com"
                   required
-                  className="bg-[#0d1a2d]/80 border-white/10 text-white placeholder:text-white/20 focus:border-[#00f0ff]/50 focus:ring-[#00f0ff]/20 transition-all h-11 rounded-lg"
+                  className="bg-muted/30 dark:bg-[#0d1a2d]/80 border-border dark:border-white/10 text-foreground dark:text-white placeholder:text-muted-foreground/30 focus:border-primary dark:focus:border-[#00f0ff]/50 focus:ring-primary/20 transition-all h-11 rounded-lg"
                 />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-xs text-[#00f0ff]/80 uppercase tracking-widest font-semibold">
+                  <Label htmlFor="password" className="text-xs text-muted-foreground dark:text-[#00f0ff]/80 uppercase tracking-widest font-semibold">
                     Password
                   </Label>
                   <Link
@@ -99,7 +112,7 @@ export default async function Login(props: {
                   name="password"
                   placeholder="Your password"
                   required
-                  className="bg-[#0d1a2d]/80 border-white/10 text-white placeholder:text-white/20 focus:border-[#00f0ff]/50 focus:ring-[#00f0ff]/20 transition-all h-11 rounded-lg"
+                  className="bg-muted/30 dark:bg-[#0d1a2d]/80 border-border dark:border-white/10 text-foreground dark:text-white placeholder:text-muted-foreground/30 focus:border-primary dark:focus:border-[#00f0ff]/50 focus:ring-primary/20 transition-all h-11 rounded-lg"
                 />
               </div>
             </div>
@@ -108,7 +121,7 @@ export default async function Login(props: {
             <SubmitButton
               pendingText="Authenticating..."
               formAction={signInAction}
-              className="w-full h-11 bg-gradient-to-r from-[#00f0ff]/20 to-[#8b5cf6]/20 border border-[#00f0ff]/40 text-[#00f0ff] font-bold uppercase tracking-[0.15em] text-sm rounded-lg hover:from-[#00f0ff]/30 hover:to-[#8b5cf6]/30 hover:border-[#00f0ff]/60 hover:shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:text-white transition-all duration-300 relative overflow-hidden group"
+              className="w-full h-11 bg-primary text-primary-foreground dark:bg-gradient-to-r dark:from-[#00f0ff]/20 dark:to-[#8b5cf6]/20 border dark:border-[#00f0ff]/40 dark:text-[#00f0ff] font-bold uppercase tracking-[0.15em] text-sm rounded-lg hover:bg-primary/90 dark:hover:from-[#00f0ff]/30 dark:hover:to-[#8b5cf6]/30 dark:hover:border-[#00f0ff]/60 hover:shadow-[0_0_20px_rgba(0,240,255,0.3)] dark:hover:text-white transition-all duration-300 relative overflow-hidden group"
             >
               <span className="relative z-10 flex items-center justify-center gap-2">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -122,8 +135,8 @@ export default async function Login(props: {
 
           {/* Separator */}
           <div className="relative my-2">
-            <Separator className="bg-white/10" />
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0a1128] px-3 text-[10px] text-white/30 uppercase tracking-widest font-semibold">
+            <Separator className="bg-border/50 dark:bg-white/10" />
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card dark:bg-[#0a1128] px-3 text-[10px] text-muted-foreground/40 uppercase tracking-widest font-semibold">
               Or
             </span>
           </div>
@@ -138,7 +151,7 @@ export default async function Login(props: {
         {/* System status line under card */}
         <div className="flex items-center justify-center gap-2 mt-5">
           <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_6px_#34d399] animate-pulse" />
-          <span className="text-[9px] text-white/25 font-mono tracking-[0.2em] uppercase">
+          <span className="text-[9px] text-muted-foreground/40 font-mono tracking-[0.2em] uppercase">
             System Online • Encrypted Connection
           </span>
         </div>

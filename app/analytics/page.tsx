@@ -7,6 +7,73 @@ import { WhoAmIPanel } from '@/components/dashboard/whoami-panel';
 
 export default function AnalyticsPage() {
   const [mounted, setMounted] = useState(false);
+  const [filters, setFilters] = useState({
+    season: 'Season 1',
+    tournament: 'Alpha Cup',
+    team: 'Team Alpha'
+  });
+
+  // Derived data based on filters to simulate "changing data"
+  const getStats = () => {
+    const seed = (filters.season.length + filters.tournament.length + filters.team.length) % 10;
+    return {
+      matches: 120 + seed * 5,
+      winRate: 60 + seed * 3,
+      avgGoals: (2.1 + seed * 0.1).toFixed(1),
+      efficiency: 80 + seed * 2,
+    };
+  };
+
+  const getHeatmapData = () => {
+    const seed = filters.team.length % 5;
+    const baseHotspots = [
+      { left: '10%', top: '40%', color: '#ff2e88', size: 'w-16 h-16', blur: 'blur-xl', opacity: 'opacity-60' },
+      { right: '10%', top: '40%', color: 'yellow-400', size: 'w-16 h-16', blur: 'blur-xl', opacity: 'opacity-60' },
+      { left: '25%', top: '20%', color: '#00f0ff', size: 'w-12 h-12', blur: 'blur-xl', opacity: 'opacity-70' },
+      { left: '25%', bottom: '20%', color: '#ff2e88', size: 'w-12 h-12', blur: 'blur-xl', opacity: 'opacity-70' },
+    ];
+    
+    // Shift positions based on seed
+    return baseHotspots.map((h, i) => ({
+      ...h,
+      top: seed % 2 === 0 ? h.top : (parseInt(h.top || '0') + 10) + '%'
+    }));
+  };
+
+  const getSpiderPoints = (isAlpha = true) => {
+    const seed = (filters.season.length + (isAlpha ? 5 : 2)) % 10;
+    const points: string[] = [];
+    const center = 50;
+    const radius = 40;
+    const angles = [0, 60, 120, 180, 240, 300];
+    
+    angles.forEach((angle, i) => {
+      const val = 0.4 + ((seed + i) % 6) / 10;
+      const r = radius * val;
+      const x = center + r * Math.cos((angle - 90) * Math.PI / 180);
+      const y = center + r * Math.sin((angle - 90) * Math.PI / 180);
+      points.push(`${x},${y}`);
+    });
+    return points.join(' ');
+  };
+
+  const getTimelinePath = (isAlpha = true) => {
+    const seed = (filters.tournament.length + (isAlpha ? 10 : 5)) % 15;
+    let path = "M 0 200";
+    const points: { x: number; y: number }[] = [];
+    for (let i = 1; i <= 10; i++) {
+      const x = i * 100;
+      const y = 40 + ((seed * i + (isAlpha ? 20 : 50)) % 140);
+      path += ` L ${x} ${y}`;
+      points.push({ x, y });
+    }
+    return { path, points };
+  };
+
+  const stats = getStats();
+  const heatmap = getHeatmapData();
+  const timelineAlpha = getTimelinePath(true);
+  const timelineBeta = getTimelinePath(false);
 
   useEffect(() => {
     setMounted(true);
@@ -42,21 +109,21 @@ export default function AnalyticsPage() {
            
            {/* KPI CARDS ROW */}
            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="border border-[#00f0ff] p-4 bg-card/60 flex flex-col justify-center items-center rounded-sm shadow-sm">
+              <div className="border border-[#00f0ff] p-4 bg-card/60 flex flex-col justify-center items-center rounded-sm shadow-sm transition-all duration-500">
                  <div className="text-[12px] text-muted-foreground mb-1">Total Matches Played</div>
-                 <div className="text-4xl font-black text-[#00f0ff]">142</div>
+                 <div className="text-4xl font-black text-[#00f0ff]">{stats.matches}</div>
               </div>
-              <div className="border border-[#ff2e88] p-4 bg-card/60 flex flex-col justify-center items-center rounded-sm shadow-sm">
+              <div className="border border-[#ff2e88] p-4 bg-card/60 flex flex-col justify-center items-center rounded-sm shadow-sm transition-all duration-500">
                  <div className="text-[12px] text-muted-foreground mb-1">Tournament Win Rate</div>
-                 <div className="text-4xl font-black text-[#ff2e88]">68%</div>
+                 <div className="text-4xl font-black text-[#ff2e88]">{stats.winRate}%</div>
               </div>
-              <div className="border border-[#00f0ff] p-4 bg-card/60 flex flex-col justify-center items-center rounded-sm shadow-sm">
+              <div className="border border-[#00f0ff] p-4 bg-card/60 flex flex-col justify-center items-center rounded-sm shadow-sm transition-all duration-500">
                  <div className="text-[12px] text-muted-foreground mb-1">Avg Goals Per Game</div>
-                 <div className="text-4xl font-black text-[#00f0ff]">2.5</div>
+                 <div className="text-4xl font-black text-[#00f0ff]">{stats.avgGoals}</div>
               </div>
-              <div className="border border-yellow-400 p-4 bg-card/60 flex flex-col justify-center items-center rounded-sm shadow-sm">
+              <div className="border border-yellow-400 p-4 bg-card/60 flex flex-col justify-center items-center rounded-sm shadow-sm transition-all duration-500">
                  <div className="text-[12px] text-muted-foreground mb-1">Player Efficiency</div>
-                 <div className="text-4xl font-black text-[#c9b700] dark:text-yellow-400">89%</div>
+                 <div className="text-4xl font-black text-[#c9b700] dark:text-yellow-400">{stats.efficiency}%</div>
               </div>
            </div>
 
@@ -82,14 +149,22 @@ export default function AnalyticsPage() {
                     </svg>
                     
                     {/* Glowing Hotspots */}
-                    <div className="absolute left-[10%] top-[40%] w-16 h-16 bg-[#ff2e88] rounded-full blur-xl opacity-60" />
-                    <div className="absolute right-[10%] top-[40%] w-16 h-16 bg-yellow-400 rounded-full blur-xl opacity-60" />
-                    <div className="absolute left-[25%] top-[20%] w-12 h-12 bg-[#00f0ff] rounded-full blur-xl opacity-70" />
-                    <div className="absolute left-[25%] bottom-[20%] w-12 h-12 bg-[#ff2e88] rounded-full blur-xl opacity-70" />
-                    <div className="absolute left-[45%] top-[40%] w-16 h-16 bg-[#ff2e88] rounded-full blur-2xl opacity-70" />
-                    <div className="absolute right-[25%] top-[15%] w-20 h-10 bg-yellow-400 rounded-full blur-xl opacity-60" />
-                    <div className="absolute right-[25%] bottom-[15%] w-20 h-10 bg-[#ff2e88] rounded-full blur-xl opacity-60" />
-                    <div className="absolute right-[35%] top-[40%] w-12 h-12 bg-[#00f0ff] rounded-full blur-xl opacity-50" />
+                    {heatmap.map((h, i) => (
+                      <div 
+                        key={i} 
+                        className={`absolute transition-all duration-1000 rounded-full ${h.size} ${h.blur} ${h.opacity}`}
+                        style={{ 
+                          left: h.left, 
+                          right: h.right, 
+                          top: h.top, 
+                          bottom: h.bottom, 
+                          backgroundColor: h.color.startsWith('#') ? h.color : undefined,
+                          background: !h.color.startsWith('#') ? undefined : undefined
+                        }}
+                      />
+                    ))}
+                    <div className="absolute left-[45%] top-[40%] w-16 h-16 bg-[#ff2e88] rounded-full blur-2xl opacity-70 transition-all duration-1000" />
+                    <div className="absolute right-[35%] top-[40%] w-12 h-12 bg-[#00f0ff] rounded-full blur-xl opacity-50 transition-all duration-1000" />
                  </div>
               </div>
 
@@ -114,8 +189,8 @@ export default function AnalyticsPage() {
                        <line x1="50" y1="50" x2="6.7" y2="25" stroke="currentColor" strokeWidth="0.5" strokeOpacity="0.2" className="text-foreground" />
                        
                        {/* Polygons */}
-                       <polygon points="50,15 80,35 75,70 50,85 15,65 20,40" fill="none" stroke="#00f0ff" strokeWidth="1.5" />
-                       <polygon points="50,25 70,20 85,60 50,75 25,75 35,30" fill="none" stroke="#ff2e88" strokeWidth="1.5" />
+                       <polygon points={getSpiderPoints(true)} fill="none" stroke="#00f0ff" strokeWidth="1.5" className="transition-all duration-1000" />
+                       <polygon points={getSpiderPoints(false)} fill="none" stroke="#ff2e88" strokeWidth="1.5" className="transition-all duration-1000" />
                     </svg>
                     
                     {/* Text labels outside the SVG area */}
@@ -168,31 +243,17 @@ export default function AnalyticsPage() {
                     <line x1="260" y1="0" x2="260" y2="200" stroke="#00f0ff" strokeWidth="1" strokeDasharray="4 4" opacity="0.6" />
                     
                     {/* Paths */}
-                    <path d="M 0 200 L 100 100 L 200 110 L 300 70 L 400 30 L 500 110 L 600 100 L 700 30 L 800 60 L 900 10 L 1000 30" fill="none" stroke="#00f0ff" strokeWidth="3" />
-                    <path d="M 0 200 L 100 150 L 200 155 L 300 100 L 400 150 L 500 130 L 600 80 L 700 130 L 800 150 L 900 100 L 1000 40" fill="none" stroke="#ff2e88" strokeWidth="3" />
+                    <path d={timelineAlpha.path} fill="none" stroke="#00f0ff" strokeWidth="3" className="transition-all duration-1000" />
+                    <path d={timelineBeta.path} fill="none" stroke="#ff2e88" strokeWidth="3" className="transition-all duration-1000" />
                     
                     {/* Data Points */}
-                    <circle cx="100" cy="100" r="4" fill="#00f0ff" />
-                    <circle cx="200" cy="110" r="4" fill="#00f0ff" />
-                    <circle cx="300" cy="70" r="4" fill="#00f0ff" />
-                    <circle cx="400" cy="30" r="4" fill="#00f0ff" />
-                    <circle cx="500" cy="110" r="4" fill="#00f0ff" />
-                    <circle cx="600" cy="100" r="4" fill="#00f0ff" />
-                    <circle cx="700" cy="30" r="4" fill="#00f0ff" />
-                    <circle cx="800" cy="60" r="4" fill="#00f0ff" />
-                    <circle cx="900" cy="10" r="4" fill="#00f0ff" />
-                    <circle cx="1000" cy="30" r="4" fill="#00f0ff" />
+                    {timelineAlpha.points.map((p, i) => (
+                      <circle key={`a-${i}`} cx={p.x} cy={p.y} r="4" fill="#00f0ff" className="transition-all duration-1000" />
+                    ))}
                     
-                    <circle cx="100" cy="150" r="4" fill="#ff2e88" />
-                    <circle cx="200" cy="155" r="4" fill="#ff2e88" />
-                    <circle cx="300" cy="100" r="4" fill="#ff2e88" />
-                    <circle cx="400" cy="150" r="4" fill="#ff2e88" />
-                    <circle cx="500" cy="130" r="4" fill="#ff2e88" />
-                    <circle cx="600" cy="80" r="4" fill="#ff2e88" />
-                    <circle cx="700" cy="130" r="4" fill="#ff2e88" />
-                    <circle cx="800" cy="150" r="4" fill="#ff2e88" />
-                    <circle cx="900" cy="100" r="4" fill="#ff2e88" />
-                    <circle cx="1000" cy="40" r="4" fill="#ff2e88" />
+                    {timelineBeta.points.map((p, i) => (
+                      <circle key={`b-${i}`} cx={p.x} cy={p.y} r="4" fill="#ff2e88" className="transition-all duration-1000" />
+                    ))}
                     
                     {/* Active Point Highlight */}
                     <circle cx="260" cy="88" r="6" fill="#00f0ff" className="animate-pulse" />
@@ -217,10 +278,14 @@ export default function AnalyticsPage() {
               <div className="flex flex-col gap-2">
                  <label className="text-[12px] text-muted-foreground font-medium">Season</label>
                  <div className="relative">
-                    <select className="w-full appearance-none bg-transparent border border-border rounded-sm text-sm text-foreground/90 p-3 pr-8 focus:outline-none focus:border-[#00f0ff]">
-                       <option>Season</option>
-                       <option>Season 1</option>
-                       <option>Season 2</option>
+                    <select 
+                       value={filters.season}
+                       onChange={(e) => setFilters({...filters, season: e.target.value})}
+                       className="w-full appearance-none bg-transparent border border-border rounded-sm text-sm text-foreground/90 p-3 pr-8 focus:outline-none focus:border-[#00f0ff] cursor-pointer"
+                    >
+                       <option className="bg-background">Season 1</option>
+                       <option className="bg-background">Season 2</option>
+                       <option className="bg-background">Season 3</option>
                     </select>
                     <div className="absolute right-3 top-[14px] pointer-events-none opacity-60">
                        <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1.5L6 6.5L11 1.5" stroke="#00f0ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -232,10 +297,15 @@ export default function AnalyticsPage() {
               <div className="flex flex-col gap-2">
                  <label className="text-[12px] text-muted-foreground font-medium">Tournament</label>
                  <div className="relative">
-                    <select className="w-full appearance-none bg-transparent border border-border rounded-sm text-sm text-foreground/90 p-3 pr-8 focus:outline-none focus:border-[#00f0ff]">
-                       <option>Tournament</option>
-                       <option>Alpha Cup</option>
-                       <option>Beta League</option>
+                    <select 
+                       value={filters.tournament}
+                       onChange={(e) => setFilters({...filters, tournament: e.target.value})}
+                       className="w-full appearance-none bg-transparent border border-border rounded-sm text-sm text-foreground/90 p-3 pr-8 focus:outline-none focus:border-[#00f0ff] cursor-pointer"
+                    >
+                       <option className="bg-background">Alpha Cup</option>
+                       <option className="bg-background">Beta League</option>
+                       <option className="bg-background">Gamma Series</option>
+                       <option className="bg-background">Delta Open</option>
                     </select>
                     <div className="absolute right-3 top-[14px] pointer-events-none opacity-60">
                        <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1.5L6 6.5L11 1.5" stroke="#00f0ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -247,10 +317,15 @@ export default function AnalyticsPage() {
               <div className="flex flex-col gap-2">
                  <label className="text-[12px] text-muted-foreground font-medium">Team</label>
                  <div className="relative">
-                    <select className="w-full appearance-none bg-transparent border border-border rounded-sm text-sm text-foreground/90 p-3 pr-8 focus:outline-none focus:border-[#00f0ff]">
-                       <option>Team</option>
-                       <option>Team Alpha</option>
-                       <option>Team Beta</option>
+                    <select 
+                       value={filters.team}
+                       onChange={(e) => setFilters({...filters, team: e.target.value})}
+                       className="w-full appearance-none bg-transparent border border-border rounded-sm text-sm text-foreground/90 p-3 pr-8 focus:outline-none focus:border-[#00f0ff] cursor-pointer"
+                    >
+                       <option className="bg-background">Team Alpha</option>
+                       <option className="bg-background">Team Beta</option>
+                       <option className="bg-background">Team Cyber</option>
+                       <option className="bg-background">Team Neon</option>
                     </select>
                     <div className="absolute right-3 top-[14px] pointer-events-none opacity-60">
                        <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1.5L6 6.5L11 1.5" stroke="#00f0ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>

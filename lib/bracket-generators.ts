@@ -237,3 +237,71 @@ function shuffleArray(array: unknown[]): void {
     [array[i], array[j]] = [array[j], array[i]];
   }
 }
+
+export const generateDoubleEliminationBracket = async (tournamentId: string) => {
+  const supabase = await createClient();
+  const resolvedTarget = await resolveMatchesTable(supabase);
+  if (!resolvedTarget) {
+    return { error: "Could not find a matches table." };
+  }
+  const matchesClient = resolvedTarget.schemaName === 'public' ? supabase : supabase.schema(resolvedTarget.schemaName);
+  const matchesTable = resolvedTarget.tableName;
+
+  // 1. Cleanup existing
+  await matchesClient.from(matchesTable).delete().eq('tournament_id', tournamentId);
+
+  // 2. Get Players
+  const { data: players } = await supabase.from('user_tournaments').select('*').eq('tournament_id', tournamentId);
+  if (!players || players.length < 4) {
+    return { error: "Double elimination requires at least 4 players." };
+  }
+
+  // Shuffle for random seeding
+  shuffleArray(players);
+
+  // 3. Generate Winners Bracket (Initial matches)
+  const numPlayers = players.length;
+  const nextPowerOfTwo = Math.pow(2, Math.ceil(Math.log2(numPlayers)));
+  
+  // For simplicity in this demo/hackathon version, we'll generate the Winners bracket first
+  // following the same logic as single elimination but marking them as "winners_bracket".
+  // Note: We need a column 'bracket_type' or similar to distinguish.
+  // If the column doesn't exist, we'll just prefix the 'round' or similar.
+  // We'll use round numbers 101, 102... for Losers bracket to avoid conflict.
+
+  let currentRound = 1;
+  const winnerMatches = [];
+  for (let i = 0; i < numPlayers; i += 2) {
+    if (i + 1 < numPlayers) {
+      winnerMatches.push({
+        tournament_id: tournamentId,
+        home_player_id: players[i].user_id,
+        away_player_id: players[i+1].user_id,
+        round: currentRound,
+      });
+    }
+  }
+
+  for (const m of winnerMatches) {
+    await matchesClient.from(matchesTable).insert([m]);
+  }
+
+  // 4. Losers Bracket Round 1 (Placeholder)
+  // Those who lose in Winners Round 1 go here.
+  // For the demo, we'll create the empty "Losers" matches.
+  const losersRound = 101; 
+  const loserMatches = [];
+  for (let i = 0; i < Math.floor(winnerMatches.length / 2); i++) {
+    loserMatches.push({
+      tournament_id: tournamentId,
+      round: losersRound,
+      description: 'Losers Bracket Initial',
+    });
+  }
+
+  for (const m of loserMatches) {
+    await matchesClient.from(matchesTable).insert([m]);
+  }
+
+  return { success: true };
+};

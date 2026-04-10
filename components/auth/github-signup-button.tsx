@@ -24,7 +24,7 @@ export function GithubSignUpButton({
   return (
     <Button 
       variant="outline" 
-      className="w-full h-11 bg-black/20 border border-white/10 text-white/70 hover:text-white hover:border-white/40 hover:bg-white/5 transition-all duration-300 relative group overflow-hidden" 
+      className="w-full h-11 bg-muted/20 dark:bg-black/20 border border-border dark:border-white/10 text-foreground/70 dark:text-white/70 hover:text-foreground dark:hover:text-white hover:border-black/40 dark:hover:border-white/40 hover:bg-muted/10 dark:hover:bg-white/5 transition-all duration-300 relative group overflow-hidden" 
       onClick={handleGithubSignUp}
     >
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer" />

@@ -78,15 +78,17 @@ export default async function AuthButton() {
       </form>
     </div>
   ) : (
-    <div className="flex gap-2">
-      <Button asChild size="sm" variant={'outline'} className="cyber-btn">
-        <Link href="/sign-in">
-          <LogIn className="mr-2 h-4 w-4" />
-          Sign in 🔑
+    <div className="flex gap-3">
+      <Button asChild size="sm" variant={'outline'} className="cyber-btn border-white/10 bg-white/5 hover:bg-[#00f0ff]/10 hover:border-[#00f0ff]/50 group transition-all">
+        <Link href="/sign-in" className="flex items-center gap-2">
+          <LogIn className="h-3.5 w-3.5 group-hover:rotate-12 transition-transform" />
+          <span className="text-[10px] font-bold uppercase tracking-widest">Sign in</span>
         </Link>
       </Button>
-      <Button asChild size="sm" variant={'default'} className="cyber-btn">
-        <Link href="/sign-up">Sign up 🆕</Link>
+      <Button asChild size="sm" className="bg-[#00f0ff] text-black hover:bg-[#00f0ff]/90 hover:shadow-[0_0_15px_rgba(0,240,255,0.5)] transition-all rounded-none px-4">
+        <Link href="/sign-up" className="flex items-center gap-2">
+          <span className="text-[10px] font-black uppercase tracking-widest">Access Protocol</span>
+        </Link>
       </Button>
     </div>
   );

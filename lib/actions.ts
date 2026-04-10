@@ -185,6 +185,7 @@ export async function submitTournament(formData: FormData) {
         ? parseInt(maxPlayersRaw as string)
         : null,
     private: isPrivateRaw === 'true',
+    format: formData.get('format') as string || 'single_elimination',
   };
 
   const description = formData.get('description') as string | null;
@@ -542,22 +543,28 @@ export async function getTournamentPlayerCount(tournamentId: string) {
 export async function startTournament(tournamentId: string) {
   const supabase = await createClient();
 
-  const { data: tournamentState, error: tournamentStateError } = await supabase
+  const { data: tournamentInfo, error: fetchError } = await supabase
     .from('tournaments')
-    .select('started')
+    .select('started, format')
     .eq('id', tournamentId)
     .single();
-  if (tournamentStateError) {
-      return { error: 'Failed to verify tournament state' };
+
+  if (fetchError || !tournamentInfo) {
+    return { error: 'Failed to verify tournament state' };
   }
-  if (tournamentState?.started) {
-      return { error: 'Tournament has already started' };
+  if (tournamentInfo.started) {
+    return { error: 'Tournament has already started' };
   }
 
-  const { success, error } =
-    await generateSingleEliminationBracket(tournamentId);
-  if (error) {
-      return { error: error };
+  let result;
+  if (tournamentInfo.format === 'double_elimination') {
+    result = await generateDoubleEliminationBracket(tournamentId);
+  } else {
+    result = await generateSingleEliminationBracket(tournamentId);
+  }
+
+  if (result.error) {
+    return { error: result.error };
   }
   const { data: tournament, error: updateError } = await supabase
     .from('tournaments')
@@ -1603,4 +1610,68 @@ export async function updateMatchSchedule(
   }
 
   return { success: true };
+}
+
+export async function parseTournamentIntent(text: string) {
+  // Artificial delay to simulate "AI processing" and give UI a chance to look cool
+  await new Promise((resolve) => setTimeout(resolve, 1200));
+
+  const lowerText = text.toLowerCase();
+  
+  // Default values
+  const config = {
+    name: '',
+    maxPlayers: 8,
+    isPrivate: false,
+    format: 'single_elimination',
+    seeding: 'random',
+    description: `Auto-generated from intent: "${text}"`,
+  };
+
+  // 1. Extract Player Count
+  const playerCountMatch = lowerText.match(/(\d+)\s*(players?|people|participants|users)/);
+  if (playerCountMatch) {
+    config.maxPlayers = parseInt(playerCountMatch[1]);
+  } else {
+    // Check for common word numbers
+    if (lowerText.includes('eight')) config.maxPlayers = 8;
+    if (lowerText.includes('sixteen')) config.maxPlayers = 16;
+    if (lowerText.includes('thirty two') || lowerText.includes('32')) config.maxPlayers = 32;
+    if (lowerText.includes('four')) config.maxPlayers = 4;
+  }
+
+  // 2. Extract Tournament Name
+  // Look for quotes or phrases like "named X" or "called X"
+  const nameMatch = text.match(/["']([^"']+)["']/) || text.match(/(?:named|called|titled)\s+([^,.]+)/i);
+  if (nameMatch) {
+    config.name = nameMatch[1].trim();
+  } else {
+    // Generate a cool placeholder if not found
+    config.name = `KhelSync Arena ${Math.floor(Math.random() * 1000)}`;
+  }
+
+  // 3. Extract Format
+  if (lowerText.includes('double')) config.format = 'double_elimination';
+  if (lowerText.includes('round robin')) config.format = 'round_robin';
+
+  // 4. Seeding Rules
+  if (lowerText.includes('ranked') || lowerText.includes('skill')) config.seeding = 'manual_order';
+  if (lowerText.includes('random')) config.seeding = 'random';
+
+  // 5. Privacy
+  if (lowerText.includes('private') || lowerText.includes('secret') || lowerText.includes('invite')) {
+    config.isPrivate = true;
+  }
+
+  return {
+    success: true,
+    config,
+    rawIntent: text,
+    tokens: [
+      { label: `${config.maxPlayers} Players`, icon: 'users' },
+      { label: config.format.replace('_', ' ').toUpperCase(), icon: 'grid' },
+      { label: config.isPrivate ? 'Private' : 'Public', icon: 'lock' },
+      { label: `${config.seeding} seeding`, icon: 'zap' },
+    ]
+  };
 }
