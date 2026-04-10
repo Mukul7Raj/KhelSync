@@ -71,22 +71,22 @@ export default async function AuthButton() {
       </a>
 
       <form action={signOutAction}>
-        <Button type="submit" variant={'outline'}>
+        <Button type="submit" variant={'outline'} className="cyber-btn">
           <LogOut className="mr-2 h-4 w-4" />
-          Sign out
+          Sign out 🚪
         </Button>
       </form>
     </div>
   ) : (
     <div className="flex gap-2">
-      <Button asChild size="sm" variant={'outline'}>
+      <Button asChild size="sm" variant={'outline'} className="cyber-btn">
         <Link href="/sign-in">
           <LogIn className="mr-2 h-4 w-4" />
-          Sign in
+          Sign in 🔑
         </Link>
       </Button>
-      <Button asChild size="sm" variant={'default'}>
-        <Link href="/sign-up">Sign up</Link>
+      <Button asChild size="sm" variant={'default'} className="cyber-btn">
+        <Link href="/sign-up">Sign up 🆕</Link>
       </Button>
     </div>
   );

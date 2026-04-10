@@ -18,6 +18,8 @@ import ProfileComments from '@/components/profile/comment-box';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { BioBox } from '@/components/profile/bio-box';
+import TournamentsSmartList from '@/components/profile/tournaments-smart-list';
+import QuickActionsFab from '@/components/profile/quick-actions-fab';
 export default async function Profile() {
   const user = await getAuthUser();
 
@@ -62,54 +64,7 @@ export default async function Profile() {
             </TabsList>
             <ScrollArea className="h-[800px] rounded-md  mt-2">
               <TabsContent value="current">
-                <div className="space-y-4">
-                  {tournaments != null ? (
-                    tournaments.map((tournament) => (
-                      <Card key={tournament.id}>
-                        <CardHeader>
-                          <CardTitle>{tournament.name}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <p>Players: {tournament.player_count}</p>
-                              <span>
-                                {tournament.finished ? (
-                                  <span className="text-destructive">
-                                    Tournament finished
-                                  </span>
-                                ) : tournament.started ? (
-                                  <span className="text-primary">Ongoing</span>
-                                ) : (
-                                  <span className="text-secondary">
-                                    Waiting for players
-                                  </span>
-                                )}
-                              </span>
-                              <p className="text-muted-foreground line-clamp-2">
-                                {tournament.description}
-                              </p>
-                            </div>
-                            <Link href={`/tournaments/${tournament.id}`}>
-                              <Button
-                                variant="link"
-                                className="mt-2 px-4 py-2 rounded"
-                              >
-                                View Tournament
-                              </Button>
-                            </Link>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))
-                  ) : (
-                    <Card>
-                      <CardHeader>
-                        <p>No tournaments available</p>
-                      </CardHeader>
-                    </Card>
-                  )}
-                </div>
+                <TournamentsSmartList tournaments={tournaments ?? null} />
               </TabsContent>
               <TabsContent value="results">
                 <div className="space-y-4">
@@ -244,6 +199,7 @@ export default async function Profile() {
           />
         </div>
       </div>
+      <QuickActionsFab tournaments={tournaments ?? null} />
     </div>
   );
 }

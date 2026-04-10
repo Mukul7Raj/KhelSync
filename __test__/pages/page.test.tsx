@@ -667,7 +667,7 @@ describe('getTournamentFinalMatch', () => {
 
     const result = await getTournamentFinalMatch('tournament-123');
 
-    expect(mockFrom).toHaveBeenCalledWith('singleEliminationMatches');
+    expect(mockFrom).toHaveBeenCalledWith('single_elimination_matches');
     expect(mockSelect).toHaveBeenCalledWith('*');
     expect(mockEq).toHaveBeenCalledWith('tournament_id', 'tournament-123');
     expect(mockOrder).toHaveBeenCalledWith('round', { ascending: false });

@@ -30,6 +30,7 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
 
   const [presentUserState, setPresentUserState] = useState({});
   const [presentUserIds, setPresentUserIds] = useState<string[]>([]);
+  const [newJoinIds, setNewJoinIds] = useState<string[]>([]);
   useEffect(() => {
     const room = supabase.channel(`tournament:${tournament.id}`);
 
@@ -80,6 +81,14 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
 
   const viewerNum = presentUserIds.length; //for also showing non logged in users
 
+  useEffect(() => {
+    const joinedNow = tournamentPlayers
+      .map((p) => p.user_id)
+      .filter((id) => !newJoinIds.includes(id));
+    if (joinedNow.length === 0) return;
+    setNewJoinIds(tournamentPlayers.map((p) => p.user_id));
+  }, [tournamentPlayers]);
+
   return (
     <Card>
       <CardHeader className="flex justify-between items-center">
@@ -94,18 +103,22 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
         <ScrollArea className="h-[200px] pr-4">
           {tournamentPlayers &&
             tournamentPlayers.map((participant) => (
-              <Participant
+              <div
                 key={participant.id}
-                participant={{
-                  userId: participant.user_id,
-                  username: participant.users.username,
-                  avatar_url: participant.users.avatar_url,
-                }}
-                isCreator={creator}
-                tournamentId={tournament.id}
-                present={presentUserIds.includes(participant.user_id)}
-                user={user}
-              />
+                className={newJoinIds.includes(participant.user_id) ? 'participant-fly-in' : ''}
+              >
+                <Participant
+                  participant={{
+                    userId: participant.user_id,
+                    username: participant.users.username,
+                    avatar_url: participant.users.avatar_url,
+                  }}
+                  isCreator={creator}
+                  tournamentId={tournament.id}
+                  present={presentUserIds.includes(participant.user_id)}
+                  user={user}
+                />
+              </div>
             ))}
         </ScrollArea>
       </CardContent>

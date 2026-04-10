@@ -2,6 +2,39 @@
 import { createClient } from '@/utils/supabase/server';
 import { SingleEliminationMatch } from '@/app/types/types';
 
+const MATCH_TABLE_CANDIDATES = [
+  'single_elimination_matches',
+  'singleEliminationMatches',
+  'matches',
+  'tournament_matches',
+  'single_elimination_matchups',
+] as const;
+const MATCH_SCHEMA_CANDIDATES = ['public', 'api', 'tournament'] as const;
+
+async function resolveMatchesTable(
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  for (const schemaName of MATCH_SCHEMA_CANDIDATES) {
+    const scopedClient =
+      schemaName === 'public' ? supabase : supabase.schema(schemaName);
+    for (const tableName of MATCH_TABLE_CANDIDATES) {
+      const { error } = await scopedClient
+        .from(tableName)
+        .select(
+          'id,tournament_id,round,home_player_id,away_player_id,home_matchup_id,away_matchup_id,winner_id'
+        )
+        .limit(1);
+      // #region agent log
+      fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'518192'},body:JSON.stringify({sessionId:'518192',runId:'initial',hypothesisId:'H9',location:'lib/bracket-generators.ts:resolveMatchesTable:probe',message:'Probed schema/table candidate',data:{schemaName,tableName,hasError:!!error,errorCode:error?.code ?? null,errorMessage:error?.message ?? null},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+      if (!error) {
+        return { schemaName, tableName };
+      }
+    }
+  }
+  return null;
+}
+
 //DISCLAIMER! THIS CODE WILL BE REFACTORED AND REDONE IN THE FUTURE
 //at the very least needs tests and better error handling
 export const generateSingleEliminationBracket = async (
@@ -9,6 +42,21 @@ export const generateSingleEliminationBracket = async (
   tournamentId: string
 ) => {
   const supabase = await createClient();
+  const resolvedTarget = await resolveMatchesTable(supabase);
+  // #region agent log
+  fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'518192'},body:JSON.stringify({sessionId:'518192',runId:'initial',hypothesisId:'H5',location:'lib/bracket-generators.ts:generateSingleEliminationBracket:table-resolution',message:'Resolved matches table result',data:{resolvedTarget},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
+  if (!resolvedTarget) {
+    return {
+      error:
+        "Could not find a supported matches table (tried schemas: public/api/tournament with known table candidates)",
+    };
+  }
+  const matchesClient =
+    resolvedTarget.schemaName === 'public'
+      ? supabase
+      : supabase.schema(resolvedTarget.schemaName);
+  const matchesTable = resolvedTarget.tableName;
 
   const {
     data: { user },
@@ -29,6 +77,17 @@ export const generateSingleEliminationBracket = async (
   if (tournament.data.creator_id !== user.id) {
     return {
       error: 'User not authorized to generate bracket for this tournament',
+    };
+  }
+
+  // Ensure retries do not fail on duplicate/partial brackets from previous attempts.
+  const { error: cleanupError } = await matchesClient
+    .from(matchesTable)
+    .delete()
+    .eq('tournament_id', tournamentId);
+  if (cleanupError) {
+    return {
+      error: `Failed to reset existing bracket: ${cleanupError.message}`,
     };
   }
 
@@ -86,13 +145,13 @@ export const generateSingleEliminationBracket = async (
   //bye matches are not sent to the database
   let prevRoundMatches = [];
   for (const match of matches) {
-    const { data, error } = await (await createClient())
-      .from('singleEliminationMatches')
+    const { data, error } = await matchesClient
+      .from(matchesTable)
       .insert([match])
       .select();
 
     if (error) {
-      return { error: 'Error inserting match' };
+      return { error: `Error inserting match: ${error.message}` };
     }
 
     prevRoundMatches.push(...data);
@@ -162,14 +221,14 @@ export const generateSingleEliminationBracket = async (
     }
     prevRoundMatches = [];
     for (const match of nextRoundMatches) {
-      const { data, error } = await (await createClient())
-        .from('singleEliminationMatches')
+      const { data, error } = await matchesClient
+        .from(matchesTable)
         .insert([match])
         .select();
 
       if (error) {
         console.error('Error inserting match:', error);
-        return { error: 'Error inserting match' };
+        return { error: `Error inserting match: ${error.message}` };
       }
 
       prevRoundMatches.push(...data);

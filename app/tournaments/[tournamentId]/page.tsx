@@ -18,15 +18,25 @@ import { NextMatch } from '@/components/tournament/next-match';
 import { Bracket } from '@/components/tournament/bracket';
 import { WinnerCard } from '@/components/tournament/winner-card';
 import { Creator } from '@/components/tournament/creator';
+import { notFound } from 'next/navigation';
+import LiveHub from '@/components/tournament/live-hub';
+import SmartScheduler from '@/components/tournament/smart-scheduler';
+import ProgressTracker from '@/components/tournament/ProgressTracker';
 
-interface Params {
+interface PageParams {
   tournamentId: string;
 }
 
-const TournamentPage = async ({ params }: { params: Params }) => {
-  const id = params.tournamentId;
-  if (!id) {
-    return <p>No tournament ID provided</p>;
+const TournamentPage = async ({
+  params,
+}: {
+  params: Promise<PageParams> | PageParams;
+}) => {
+  const resolvedParams = await Promise.resolve(params);
+  const id = resolvedParams?.tournamentId;
+
+  if (!id || id === 'undefined' || id === 'null') {
+    notFound();
   }
 
   const { tournament, error } = await getTournamentById(id);
@@ -73,7 +83,12 @@ const TournamentPage = async ({ params }: { params: Params }) => {
   }
 
   return (
-    <div className="mx-auto p-4 space-y-6">
+    <div className="mx-auto p-4 space-y-6 subtle-arena-bg">
+      <ProgressTracker
+        started={tournament.started}
+        finished={tournament.finished}
+        playerCount={tournamentPlayers?.length || 0}
+      />
       <div className="grid grid-cols-1 lg:grid-cols-[3fr,1.5fr,1.5fr] gap-6">
         {/* Tournament Bracket */}
         {tournament && (
@@ -119,7 +134,11 @@ const TournamentPage = async ({ params }: { params: Params }) => {
               <div className="flex items-center">
                 <Crown className="mr-2 h-4 w-4 text-primary" />
                 <>
-                  <Creator publicCreatorData={publicCreatorData} user={user} />
+                  <Creator
+                    publicCreatorData={publicCreatorData}
+                    creatorId={tournament.creator_id}
+                    user={user}
+                  />
                 </>
               </div>
               {!isUserParticipant && !tournament.started && (
@@ -139,20 +158,21 @@ const TournamentPage = async ({ params }: { params: Params }) => {
           {/*chatbox*/}
           <Card>
             <CardHeader>
-              <CardTitle>Chat</CardTitle>
+              <CardTitle>Chat and Fan Interaction</CardTitle>
             </CardHeader>
             <CardContent>
-              <div>
-                {isUserParticipant || isUserCreator ? (
-                  <ChatComponent tournamentId={id} />
-                ) : (
-                  <p className="text-muted-foreground">
-                    You must be a participant to chat
-                  </p>
-                )}
-              </div>
+              <ChatComponent
+                tournamentId={id}
+                canSendMessages={!!(isUserParticipant || isUserCreator)}
+              />
             </CardContent>
           </Card>
+          <LiveHub
+            tournamentId={id}
+            initialMatches={matches ?? []}
+            tournamentStarted={tournament.started}
+          />
+          <SmartScheduler matches={matches ?? []} />
         </div>
       </div>
     </div>

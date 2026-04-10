@@ -1,6 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import Progress from '@/components/ui/progress';
 import {
   getAllUserMatchResults,
   getAllUserOwnedPublicTournaments,
@@ -11,26 +10,33 @@ import {
 } from '@/lib/actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Trophy, Swords } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { Label } from '@/components/ui/label';
-import ProfileComments from '@/components/profile/comment-box';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import SendMessageButton from '@/components/profile/send-message-button';
+import { notFound } from 'next/navigation';
+import ProfileLiveDashboard from '@/components/profile/profile-live-dashboard';
+import TournamentsSmartList from '@/components/profile/tournaments-smart-list';
+import QuickActionsFab from '@/components/profile/quick-actions-fab';
 
 type Params = {
   userId: string;
 };
 
-const UserPage = async ({ params }: { params: Params }) => {
-  const id = params.userId;
+const UserPage = async ({
+  params,
+}: {
+  params: Promise<Params> | Params;
+}) => {
+  const resolvedParams = await Promise.resolve(params);
+  const id = resolvedParams?.userId;
 
   const user = await getAuthUser(); // get user to check if it's the same as the public user
   //and also to check if the user is logged in
 
-  if (!id) {
-    return <p>No user ID provided</p>;
+  if (!id || id === 'undefined' || id === 'null') {
+    notFound();
   }
 
   const { data: publicUser } = await getPublicUserData(id);
@@ -75,54 +81,7 @@ const UserPage = async ({ params }: { params: Params }) => {
             </TabsList>
             <ScrollArea className="h-[800px]  rounded-md  mt-2">
               <TabsContent value="owned">
-                <div className="space-y-4">
-                  {tournaments != null ? (
-                    tournaments.map((tournament) => (
-                      <Card key={tournament.id}>
-                        <CardHeader>
-                          <CardTitle>{tournament.name}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <p>Players: {tournament.player_count}</p>
-                              <span>
-                                {tournament.finished ? (
-                                  <span className="text-destructive">
-                                    Tournament finished
-                                  </span>
-                                ) : tournament.started ? (
-                                  <span className="text-primary">Ongoing</span>
-                                ) : (
-                                  <span className="text-secondary">
-                                    Waiting for players
-                                  </span>
-                                )}
-                              </span>
-                              <p className="text-muted-foreground line-clamp-2">
-                                {tournament.description}
-                              </p>
-                            </div>
-                            <Link href={`/tournaments/${tournament.id}`}>
-                              <Button
-                                variant="link"
-                                className="mt-2 px-4 py-2 rounded"
-                              >
-                                View Tournament
-                              </Button>
-                            </Link>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))
-                  ) : (
-                    <Card>
-                      <CardHeader>
-                        <p>No tournaments available</p>
-                      </CardHeader>
-                    </Card>
-                  )}
-                </div>
+                <TournamentsSmartList tournaments={tournaments ?? null} />
               </TabsContent>
               <TabsContent value="results">
                 <div className="space-y-4">
@@ -177,86 +136,15 @@ const UserPage = async ({ params }: { params: Params }) => {
         </div>
 
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Tournament Statistics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {statistics && (
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between mb-2">
-                      <span>Match Win Ratio</span>
-                      <span>
-                        {Math.round(
-                          (statistics.matchesWon /
-                            (statistics.matchesWon + statistics.matchesLost)) *
-                            100
-                        )}
-                        %
-                      </span>
-                    </div>
-                    {
-                      <Progress
-                        value={
-                          (statistics.matchesWon /
-                            (statistics.matchesWon + statistics.matchesLost)) *
-                          100
-                        }
-                      />
-                    }
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Trophy className="w-4 h-4" />
-                      <div>
-                        <p className="text-sm font-medium">
-                          {statistics.tournamentCount}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Tournaments Participated
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Trophy className="w-4 h-4 text-yellow-500" />
-                      <div>
-                        <p className="text-sm font-medium">
-                          {statistics.wonCount}
-                        </p>
-                        <p className="text-xs text-gray-500">Tournaments Won</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Swords className="w-4 h-4 text-green-700 dark:text-green-400" />
-                      <div>
-                        <p className="text-sm font-medium">
-                          {statistics.matchesWon}
-                        </p>
-                        <p className="text-xs text-gray-500">Matches Won</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Swords className="w-4 h-4 text-red-500" />
-                      <div>
-                        <p className="text-sm font-medium">
-                          {statistics.matchesLost}
-                        </p>
-                        <p className="text-xs text-gray-500">Matches Lost</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          <ProfileComments
-            user={user}
-            profile_user_id={id}
-            comments={comments}
+          <ProfileLiveDashboard
+            statistics={statistics}
+            tournaments={tournaments}
+            pastMatches={pastMatches}
+            comments={comments ?? []}
           />
         </div>
       </div>
+      <QuickActionsFab tournaments={tournaments ?? null} />
     </div>
   );
 };

@@ -33,12 +33,13 @@ export default function RecentChatsList({ user }: { user: User }) {
   useEffect(() => {
     const fetchChats = async () => {
       if (!isOpen) return;
+      setIsLoading(true);
       if (isOpen) {
         const result = await getRecentChats();
         if (result.recentChats) {
           setRecentChats(result.recentChats);
         } else {
-          console.error(result.error);
+          setRecentChats([]);
         }
         setIsLoading(false);
       }

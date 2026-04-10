@@ -13,16 +13,22 @@ import React from 'react';
 import Link from 'next/link';
 
 interface CreatorProps {
-  publicCreatorData: PublicUser;
+  publicCreatorData: PublicUser | null;
+  creatorId: string;
   user: UserData | null;
 }
 export const Creator: React.FC<CreatorProps> = ({
   publicCreatorData,
+  creatorId,
   user,
 }) => {
   const { setChatOpen, setReceiverId } = useChat();
+  const creatorDisplayName =
+    publicCreatorData?.username ||
+    `User ${creatorId.slice(0, 8)}`;
 
   const handleSendMessage = () => {
+    if (!publicCreatorData?.id) return;
     setChatOpen(true);
     setReceiverId(publicCreatorData.id);
   };
@@ -33,17 +39,17 @@ export const Creator: React.FC<CreatorProps> = ({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <span className="ml-2 cursor-pointer text-secondary ">
-            {publicCreatorData.username}
+            {creatorDisplayName}
           </span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <Link href={`/profile/${publicCreatorData.id}`}>
+          <Link href={`/profile/${publicCreatorData?.id || creatorId}`}>
             <DropdownMenuItem className="cursor-pointer">
               <User className="mr-2 h-4 w-4" />
               <span>Show Profile</span>
             </DropdownMenuItem>
           </Link>
-          {user && user.id != publicCreatorData.id && (
+          {user && publicCreatorData?.id && user.id != publicCreatorData.id && (
             <DropdownMenuItem
               onSelect={handleSendMessage}
               className="cursor-pointer"

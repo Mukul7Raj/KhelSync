@@ -30,7 +30,9 @@ export default function TournmamentsBrowser({
       (tournament) =>
         (statusFilter === 'all' || tournament.status === statusFilter) &&
         (tournament.name.toLowerCase().includes(search.toLowerCase()) ||
-          tournament.description.toLowerCase().includes(search.toLowerCase()))
+          (tournament.description || '')
+            .toLowerCase()
+            .includes(search.toLowerCase()))
     )
     .sort((a, b) => {
       if (sortBy === 'newest') {

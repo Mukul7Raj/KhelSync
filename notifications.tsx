@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 
 const Notifications = () => {
-    const channelRef = useRef(null);
+    const channelRef = useRef<{ unsubscribe?: () => void } | null>(null);
     const subscribedRef = useRef(false);
 
     useEffect(() => {
@@ -9,14 +9,15 @@ const Notifications = () => {
         if (subscribedRef.current) return;
         subscribedRef.current = true;
 
-        // Subscribe to the channel
-        channelRef.current = someSubscribeMethod('realtime:notifications', (data) => {
-            // Handle incoming notifications
-        });
+        // Placeholder subscription for now.
+        // Wire to your realtime provider when this component is integrated.
+        channelRef.current = {
+            unsubscribe: () => {},
+        };
 
         // Cleanup on unmount
         return () => {
-            if (channelRef.current) {
+            if (channelRef.current?.unsubscribe) {
                 channelRef.current.unsubscribe();
                 subscribedRef.current = false;
             }

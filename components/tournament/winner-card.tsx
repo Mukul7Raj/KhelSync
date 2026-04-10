@@ -20,10 +20,16 @@ export const WinnerCard: React.FC<WinnerCardProps> = async ({ tournament }) => {
   }
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden relative winner-rise hover-lift-glow">
+      <div className="confetti-pop" aria-hidden>
+        <span className="confetti-piece confetti-1">🎉</span>
+        <span className="confetti-piece confetti-2">✨</span>
+        <span className="confetti-piece confetti-3">🎊</span>
+        <span className="confetti-piece confetti-4">🏆</span>
+      </div>
       <CardHeader className="p-0">
         <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-secondary h-24 flex items-center justify-center">
-          <Trophy className="text-white w-16 h-16 animate-bounce" />
+          <Trophy className="text-white w-16 h-16 animate-bounce animate-pulse-glow" />
         </div>
       </CardHeader>
       <CardContent className="p-6 bg-gradient-to-b from-yellow-100 to-white">

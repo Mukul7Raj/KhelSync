@@ -34,24 +34,24 @@ export default async function RootLayout({
       <body className="bg-background text-foreground">
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
           <ChatProvider>
             <main className="min-h-screen flex flex-col items-center">
               <div className="flex-1 w-full flex flex-col items-center">
-                <header className="w-full border-b border-b-foreground/10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <header className="w-full border-b border-border bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/80">
                   <div className="mx-auto px-4">
                     <nav className="flex flex-col py-3 gap-3 md:flex-row md:items-center md:py-4">
                       <div className="flex items-center justify-between ">
                         <Link
                           href="/"
-                          className="flex items-center space-x-2 text-lg font-semibold hover:text-primary"
+                          className="flex items-center space-x-2 text-lg font-semibold hover:text-primary animate-float"
                         >
-                          <Trophy className="h-6 w-6" />
+                          <Trophy className="h-6 w-6 text-cyan-300" />
                           <span className="hidden md:inline">
-                            KhelSync
+                            <span className="neon-title">KhelSync 🏆⚡</span>
                           </span>
                         </Link>
                         <div className="md:hidden">
@@ -61,6 +61,13 @@ export default async function RootLayout({
                       <Separator className="sm:hidden" />
                       <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4 md:justify-start">
                         <TournamentDropdownList />
+                        <Link
+                          href="/auction"
+                          className="text-[11px] font-bold uppercase tracking-widest px-4 py-2 border border-[#ff2e88] text-[#ff2e88] hover:bg-[#ff2e88]/10 transition-all flex items-center gap-2"
+                        >
+                          <div className="w-1.5 h-1.5 bg-[#ff2e88] animate-pulse rounded-full" />
+                          Live Auction
+                        </Link>
                         <TournamentFormModal user={user} />
                       </div>
                       <div className="hidden md:block ml-auto">

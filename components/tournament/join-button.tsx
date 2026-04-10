@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { joinTournament } from '@/lib/actions';
+import JoinAnimation from './JoinAnimation';
 
 interface JoinButtonProps {
   user: User | null;
@@ -15,26 +16,44 @@ interface JoinButtonProps {
 export function JoinButton({ user, tournamentId }: JoinButtonProps) {
   const router = useRouter();
   const [isJoining, setIsJoining] = useState(false);
+  const [showJourney, setShowJourney] = useState(false);
+  const [joinResponse, setJoinResponse] = useState<{
+    success?: boolean;
+    error?: string;
+  } | null>(null);
+  const [animationDone, setAnimationDone] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!joinResponse || !animationDone) return;
+
+    if (joinResponse.success) {
+      toast({
+        title: 'Success',
+        description: 'Joined Tournament Successfully',
+      });
+      router.refresh();
+    } else if (joinResponse.error) {
+      toast({
+        title: 'Error',
+        description: joinResponse.error,
+      });
+    }
+
+    setShowJourney(false);
+    setJoinResponse(null);
+    setAnimationDone(false);
+    setIsJoining(false);
+  }, [joinResponse, animationDone, router, toast]);
 
   const handleJoin = async () => {
     setIsJoining(true);
-
-    const { success, error } = await joinTournament(tournamentId);
-
-    // Display success toast message or error message
-    if (success) {
-      toast({
-        title: 'Success',
-        description: 'You have successfully joined the tournament',
-      });
-    }
-    if (error) {
-      toast({
-        title: 'Error',
-        description: error,
-      });
-      setIsJoining(false);
+    setShowJourney(true);
+    try {
+      const response = await joinTournament(tournamentId);
+      setJoinResponse(response);
+    } finally {
+      // resolved after animation completion effect
     }
   };
 
@@ -47,8 +66,11 @@ export function JoinButton({ user, tournamentId }: JoinButtonProps) {
   if (!user) {
     return (
       <div className="text-center">
-        <Button onClick={handleLoginRedirect} className="w-full sm:w-auto">
-          Log in to Join Tournament
+        <Button
+          onClick={handleLoginRedirect}
+          className="w-full sm:w-auto cyber-btn animate-pulse-glow"
+        >
+          Log in to Join Tournament 🔐
         </Button>
         <p className="mt-2 text-sm text-gray-600">
           You must be logged in to join the tournament.
@@ -58,13 +80,14 @@ export function JoinButton({ user, tournamentId }: JoinButtonProps) {
   }
 
   return (
-    <div className="text-center">
+    <div className="text-center space-y-3">
+      <JoinAnimation open={showJourney} onComplete={() => setAnimationDone(true)} />
       <Button
         onClick={handleJoin}
         disabled={isJoining}
-        className="w-full sm:w-auto"
+        className="w-full sm:w-auto cyber-btn animate-pulse-glow transition-transform hover:scale-105"
       >
-        {isJoining ? 'Joining...' : 'Join Tournament'}
+        {isJoining ? 'Joining Journey... ⚡' : 'Join Tournament 🤝'}
       </Button>
     </div>
   );

@@ -23,9 +23,11 @@ type PublicMessage = {
 export function ChatBox({
   initMessages,
   tournamentId,
+  canSendMessages = true,
 }: {
   initMessages: PublicMessage[];
   tournamentId: string;
+  canSendMessages?: boolean;
 }) {
   const supabase = useMemo(() => createClient(), []);
 
@@ -139,7 +141,6 @@ export function ChatBox({
             </p>
           </div>
         ))}
-        <div style={{ height: 0 }} />
       </ScrollArea>
       <form
         onSubmit={handleSubmit}
@@ -150,16 +151,25 @@ export function ChatBox({
           id="message"
           name="message"
           placeholder="Type your message..."
-          disabled={disableChat}
+          disabled={disableChat || !canSendMessages}
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           className="flex-grow"
           autoComplete="off"
         />
-        <Button type="submit" className="ml-2" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          className="ml-2"
+          disabled={isSubmitting || disableChat || !canSendMessages}
+        >
           {isSubmitting ? 'Sending...' : 'Send'}
         </Button>
       </form>
+      {!canSendMessages && (
+        <p className="text-xs text-muted-foreground mt-2">
+          Fan chat is view-only. Join this tournament to send messages.
+        </p>
+      )}
     </div>
   );
 }

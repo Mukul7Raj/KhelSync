@@ -64,6 +64,7 @@ export default function TournamentFormModal({
 }: TournamentFormModalProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const router = useRouter();
 
   const form = useForm<FormValues>({
@@ -76,7 +77,25 @@ export default function TournamentFormModal({
     },
   });
 
+  const fillDemoValues = (isPrivate: boolean) => {
+    form.setValue(
+      'name',
+      isPrivate ? 'Cyber Clash Private Arena' : 'Neon Sports Open Cup'
+    );
+    form.setValue(
+      'description',
+      isPrivate
+        ? 'Invite-only showdown. Approved players compete for leaderboard glory.'
+        : 'Public bracket tournament for quick matchmaking and live progression.'
+    );
+    form.setValue('maxPlayers', isPrivate ? 8 : 16);
+    form.setValue('isPrivate', isPrivate);
+  };
+
   const onSubmit = async (data: FormValues) => {
+    setIsCreating(true);
+    const startMs = Date.now();
+    const minAnimationMs = 1500;
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined) {
@@ -85,8 +104,14 @@ export default function TournamentFormModal({
     });
 
     const response = await submitTournament(formData);
+    const elapsed = Date.now() - startMs;
+    if (elapsed < minAnimationMs) {
+      await new Promise((resolve) =>
+        window.setTimeout(resolve, minAnimationMs - elapsed)
+      );
+    }
 
-    if (response?.success) {
+    if (response?.success && response.tournamentId) {
       setOpen(false);
       router.push(`/tournaments/${response.tournamentId}`);
       toast({
@@ -94,13 +119,16 @@ export default function TournamentFormModal({
         description: 'New tournament has been created successfully',
       });
     }
-    if (response?.error) {
+    if (response?.error || (response?.success && !response.tournamentId)) {
       toast({
         title: 'Error',
-        description: response.error,
+        description:
+          response?.error ||
+          'Tournament created but ID was not returned. Please refresh and try again.',
       });
     }
     form.reset();
+    setIsCreating(false);
   };
 
   return (
@@ -108,15 +136,15 @@ export default function TournamentFormModal({
       {user && (
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline">
-              <Zap className="h-4 w-4 mr-2" /> Create Tournament
+            <Button variant="outline" className="cyber-btn">
+              <Zap className="h-4 w-4 mr-2" /> Create Tournament ⚡
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[480px]">
+          <DialogContent className="sm:max-w-[520px] cyber-card">
             <DialogHeader>
-              <DialogTitle>Create Tournament</DialogTitle>
+              <DialogTitle className="neon-title">Create Tournament 🏆</DialogTitle>
               <DialogDescription>
-                Fill in the details to create a new tournament.
+                Fill in the details to create a new tournament. Lock in your arena.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -124,6 +152,46 @@ export default function TournamentFormModal({
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-4"
               >
+                {isCreating && (
+                  <div className="journey-track slide-in-live border-cyan-400/60 shadow-[0_0_14px_rgba(0,240,255,0.35)]">
+                    <div className="journey-track-line" />
+                    <div className="journey-token" />
+                    <div className="relative z-10 grid grid-cols-4 gap-1 text-[10px]">
+                      <p className="text-center text-cyan-200 font-semibold">
+                        Draft
+                      </p>
+                      <p className="text-center text-cyan-200 font-semibold">
+                        Validate
+                      </p>
+                      <p className="text-center text-cyan-200 font-semibold">
+                        Build
+                      </p>
+                      <p className="text-center text-cyan-200 font-semibold">
+                        Launch
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-2 rounded border border-cyan-400/30 bg-cyan-500/5 p-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="cyber-btn text-xs"
+                    onClick={() => fillDemoValues(false)}
+                  >
+                    🎯 Use Demo Public Data
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="cyber-btn text-xs"
+                    onClick={() => fillDemoValues(true)}
+                  >
+                    🔒 Use Demo Private Data
+                  </Button>
+                </div>
                 <FormField
                   control={form.control}
                   name="name"
@@ -147,7 +215,7 @@ export default function TournamentFormModal({
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>Description 📝</FormLabel>
                       <FormControl>
                         <Textarea
                           {...field}
@@ -163,7 +231,7 @@ export default function TournamentFormModal({
                   name="maxPlayers"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Max Players</FormLabel>
+                      <FormLabel>Max Players 👥</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -195,7 +263,7 @@ export default function TournamentFormModal({
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <div className="flex items-center space-x-2">
-                          <FormLabel>Make private</FormLabel>
+                          <FormLabel>Make private 🔒</FormLabel>
                           <TooltipProvider delayDuration={0}>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -219,7 +287,9 @@ export default function TournamentFormModal({
                   )}
                 />
                 <div className="flex justify-end">
-                  <Button type="submit">Create</Button>
+                  <Button type="submit" className="cyber-btn animate-pulse-glow" disabled={isCreating}>
+                    {isCreating ? 'Creating Tournament... ⚡' : 'Create 🚀'}
+                  </Button>
                 </div>
               </form>
             </Form>

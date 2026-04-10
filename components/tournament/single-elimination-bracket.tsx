@@ -167,7 +167,7 @@ const SingleEliminationBracket: React.FC<{
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'singleEliminationMatches',
+          table: 'single_elimination_matches',
         },
         (payload) => {
           console.log('Bracket update payload:', payload);
