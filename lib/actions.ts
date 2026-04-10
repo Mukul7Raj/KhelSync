@@ -416,14 +416,8 @@ export async function getAllUserMatchResults(userId: string) {
 export async function getCurrentUserMatchResults() {
   const supabase = await createClient();
   const user = await getAuthUser();
-  // #region agent log
-  fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '530ddd' }, body: JSON.stringify({ sessionId: '530ddd', runId: 'initial', hypothesisId: 'H1', location: 'lib/actions.ts:getCurrentUserMatchResults:entry', message: 'Entered getCurrentUserMatchResults', data: { hasUser: !!user, userId: user?.id ?? null }, timestamp: Date.now() }) }).catch(() => { });
-  // #endregion
   if (!user) {
-    // #region agent log
-    fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '530ddd' }, body: JSON.stringify({ sessionId: '530ddd', runId: 'initial', hypothesisId: 'H2', location: 'lib/actions.ts:getCurrentUserMatchResults:no-user', message: 'No authenticated user for match results', data: {}, timestamp: Date.now() }) }).catch(() => { });
-    // #endregion
-    return { error: 'You must be logged in to view your match results' };
+      return { error: 'You must be logged in to view your match results' };
   }
   const { data: matches, error } = await supabase
     .from('single_elimination_matches')
@@ -431,27 +425,15 @@ export async function getCurrentUserMatchResults() {
     .or(`home_player_id.eq.${user.id},away_player_id.eq.${user.id}`)
     .not('winner_id', 'is', null)
     .not('tournaments', 'is', null);
-  // #region agent log
-  fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '530ddd' }, body: JSON.stringify({ sessionId: '530ddd', runId: 'initial', hypothesisId: 'H3', location: 'lib/actions.ts:getCurrentUserMatchResults:post-query', message: 'Fetched current user matches', data: { matchCount: matches?.length ?? null, hasMatches: !!matches, hasError: !!error, errorMessage: error?.message ?? null, errorCode: error?.code ?? null }, timestamp: Date.now() }) }).catch(() => { });
-  // #endregion
 
   if (error) {
-    // #region agent log
-    fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '530ddd' }, body: JSON.stringify({ sessionId: '530ddd', runId: 'post-fix', hypothesisId: 'H5', location: 'lib/actions.ts:getCurrentUserMatchResults:error-branch', message: 'Error branch taken before no-matches branch', data: { errorMessage: error.message, errorCode: error.code ?? null }, timestamp: Date.now() }) }).catch(() => { });
-    // #endregion
-    if (error.code === 'PGRST205') {
-      // #region agent log
-      fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '530ddd' }, body: JSON.stringify({ sessionId: '530ddd', runId: 'post-fix', hypothesisId: 'H6', location: 'lib/actions.ts:getCurrentUserMatchResults:schema-fallback', message: 'Schema cache miss fallback to empty matches', data: { errorCode: error.code }, timestamp: Date.now() }) }).catch(() => { });
-      // #endregion
-      return { matchesWithUsernames: [] };
+      if (error.code === 'PGRST205') {
+          return { matchesWithUsernames: [] };
     }
     return { matchesWithUsernames: [], error: 'Failed to fetch match results' };
   }
   if (!matches) {
-    // #region agent log
-    fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '530ddd' }, body: JSON.stringify({ sessionId: '530ddd', runId: 'post-fix', hypothesisId: 'H4', location: 'lib/actions.ts:getCurrentUserMatchResults:no-matches-branch', message: 'No matches branch taken after error check', data: {}, timestamp: Date.now() }) }).catch(() => { });
-    // #endregion
-    return { matchesWithUsernames: [], error: 'No matches found' };
+      return { matchesWithUsernames: [], error: 'No matches found' };
   }
   const matchPromises = matches.map(async (match) => {
     const [homePlayer, awayPlayer] = await Promise.all([
@@ -554,9 +536,6 @@ export async function getTournamentPlayerCount(tournamentId: string) {
 
 export async function startTournament(tournamentId: string) {
   const supabase = await createClient();
-  // #region agent log
-  fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '518192' }, body: JSON.stringify({ sessionId: '518192', runId: 'initial', hypothesisId: 'H1', location: 'lib/actions.ts:startTournament:entry', message: 'startTournament invoked', data: { tournamentId }, timestamp: Date.now() }) }).catch(() => { });
-  // #endregion
 
   const { data: tournamentState, error: tournamentStateError } = await supabase
     .from('tournaments')
@@ -564,31 +543,16 @@ export async function startTournament(tournamentId: string) {
     .eq('id', tournamentId)
     .single();
   if (tournamentStateError) {
-    // #region agent log
-    fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '518192' }, body: JSON.stringify({ sessionId: '518192', runId: 'initial', hypothesisId: 'H2', location: 'lib/actions.ts:startTournament:state-error', message: 'Failed to read tournament state', data: { message: tournamentStateError.message, code: tournamentStateError.code ?? null }, timestamp: Date.now() }) }).catch(() => { });
-    // #endregion
-    return { error: 'Failed to verify tournament state' };
+      return { error: 'Failed to verify tournament state' };
   }
-  // #region agent log
-  fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '518192' }, body: JSON.stringify({ sessionId: '518192', runId: 'initial', hypothesisId: 'H6', location: 'lib/actions.ts:startTournament:state-read', message: 'Tournament state read', data: { started: tournamentState?.started ?? null }, timestamp: Date.now() }) }).catch(() => { });
-  // #endregion
   if (tournamentState?.started) {
-    // #region agent log
-    fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '518192' }, body: JSON.stringify({ sessionId: '518192', runId: 'initial', hypothesisId: 'H7', location: 'lib/actions.ts:startTournament:already-started', message: 'Start blocked because tournament already started', data: { tournamentId }, timestamp: Date.now() }) }).catch(() => { });
-    // #endregion
-    return { error: 'Tournament has already started' };
+      return { error: 'Tournament has already started' };
   }
-  // #region agent log
-  fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '518192' }, body: JSON.stringify({ sessionId: '518192', runId: 'initial', hypothesisId: 'H8', location: 'lib/actions.ts:startTournament:before-generate-bracket', message: 'Calling generateSingleEliminationBracket', data: { tournamentId }, timestamp: Date.now() }) }).catch(() => { });
-  // #endregion
 
   const { success, error } =
     await generateSingleEliminationBracket(tournamentId);
   if (error) {
-    // #region agent log
-    fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '518192' }, body: JSON.stringify({ sessionId: '518192', runId: 'initial', hypothesisId: 'H3', location: 'lib/actions.ts:startTournament:bracket-error', message: 'Bracket generation failed', data: { error }, timestamp: Date.now() }) }).catch(() => { });
-    // #endregion
-    return { error: error };
+      return { error: error };
   }
   const { data: tournament, error: updateError } = await supabase
     .from('tournaments')
@@ -1417,18 +1381,12 @@ export async function deleteProfileComment(
 //this is just a quick way to get some statistics to the profile page, can be improved later
 export async function getUserStatistics(userId: string) {
   const supabase = await createClient();
-  // #region agent log
-  fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '530ddd' }, body: JSON.stringify({ sessionId: '530ddd', runId: 'initial', hypothesisId: 'S1', location: 'lib/actions.ts:getUserStatistics:entry', message: 'Entered getUserStatistics', data: { userIdPresent: !!userId }, timestamp: Date.now() }) }).catch(() => { });
-  // #endregion
 
   //amount of tournaments user has joined
   const { data: joinedCount, error } = await supabase
     .from('user_tournaments')
     .select('tournament_id')
     .eq('user_id', userId);
-  // #region agent log
-  fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '530ddd' }, body: JSON.stringify({ sessionId: '530ddd', runId: 'initial', hypothesisId: 'S2', location: 'lib/actions.ts:getUserStatistics:joined-query', message: 'Joined tournaments query result', data: { joinedCount: joinedCount?.length ?? null, hasError: !!error, errorCode: error?.code ?? null, errorMessage: error?.message ?? null }, timestamp: Date.now() }) }).catch(() => { });
-  // #endregion
 
   if (error) {
     console.error(error);
@@ -1457,15 +1415,9 @@ export async function getUserStatistics(userId: string) {
     .from('single_elimination_matches')
     .select('id')
     .eq('winner_id', userId);
-  // #region agent log
-  fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '530ddd' }, body: JSON.stringify({ sessionId: '530ddd', runId: 'initial', hypothesisId: 'S3', location: 'lib/actions.ts:getUserStatistics:matches-won-query', message: 'Matches won query result', data: { matchesWonCount: matchesWon?.length ?? null, hasError: !!matchesWonError, errorCode: matchesWonError?.code ?? null, errorMessage: matchesWonError?.message ?? null }, timestamp: Date.now() }) }).catch(() => { });
-  // #endregion
 
   if (matchesWonError) {
-    // #region agent log
-    fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '530ddd' }, body: JSON.stringify({ sessionId: '530ddd', runId: 'initial', hypothesisId: 'S4', location: 'lib/actions.ts:getUserStatistics:matches-won-error-branch', message: 'matchesWonError branch taken', data: { errorCode: matchesWonError.code ?? null, errorMessage: matchesWonError.message }, timestamp: Date.now() }) }).catch(() => { });
-    // #endregion
-    console.error(matchesWonError);
+      console.error(matchesWonError);
     return { error: 'Failed to fetch user statistics' };
   }
 
@@ -1474,9 +1426,6 @@ export async function getUserStatistics(userId: string) {
     .select('id')
     .or(`home_player_id.eq.${userId},away_player_id.eq.${userId}`)
     .not('winner_id', 'eq', userId);
-  // #region agent log
-  fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '530ddd' }, body: JSON.stringify({ sessionId: '530ddd', runId: 'initial', hypothesisId: 'S5', location: 'lib/actions.ts:getUserStatistics:matches-lost-query', message: 'Matches lost query result', data: { matchesLostCount: matchesLost?.length ?? null, hasError: !!matchesLostError, errorCode: matchesLostError?.code ?? null, errorMessage: matchesLostError?.message ?? null }, timestamp: Date.now() }) }).catch(() => { });
-  // #endregion
 
   if (matchesLostError) {
     console.error(matchesLostError);

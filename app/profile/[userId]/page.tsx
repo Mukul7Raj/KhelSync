@@ -138,8 +138,8 @@ const UserPage = async ({
         <div className="space-y-6">
           <ProfileLiveDashboard
             statistics={statistics}
-            tournaments={tournaments}
-            pastMatches={pastMatches}
+            tournaments={tournaments ?? null}
+            pastMatches={pastMatches ?? null}
             comments={comments ?? []}
           />
         </div>

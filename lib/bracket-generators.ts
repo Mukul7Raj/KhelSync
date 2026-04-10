@@ -24,10 +24,7 @@ async function resolveMatchesTable(
           'id,tournament_id,round,home_player_id,away_player_id,home_matchup_id,away_matchup_id,winner_id'
         )
         .limit(1);
-      // #region agent log
-      fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'518192'},body:JSON.stringify({sessionId:'518192',runId:'initial',hypothesisId:'H9',location:'lib/bracket-generators.ts:resolveMatchesTable:probe',message:'Probed schema/table candidate',data:{schemaName,tableName,hasError:!!error,errorCode:error?.code ?? null,errorMessage:error?.message ?? null},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
-      if (!error) {
+          if (!error) {
         return { schemaName, tableName };
       }
     }
@@ -43,9 +40,6 @@ export const generateSingleEliminationBracket = async (
 ) => {
   const supabase = await createClient();
   const resolvedTarget = await resolveMatchesTable(supabase);
-  // #region agent log
-  fetch('http://127.0.0.1:7443/ingest/465a5f4f-40df-4765-a33e-ecf650a5459b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'518192'},body:JSON.stringify({sessionId:'518192',runId:'initial',hypothesisId:'H5',location:'lib/bracket-generators.ts:generateSingleEliminationBracket:table-resolution',message:'Resolved matches table result',data:{resolvedTarget},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
   if (!resolvedTarget) {
     return {
       error:
